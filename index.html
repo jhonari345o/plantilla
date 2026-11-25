@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Control de asistencia y viáticos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF1F4;--card:#FFFFFF;--ink:#1B2430;--muted:#5B6676;--line:#CDD4DD;
+  --accent:#1F4E8C;--accent-ink:#FFFFFF;--late:#C2362B;--late-bg:#FBE9E7;--ok:#2E7D5B;--ok-bg:#E5F3EC;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#12161C;--card:#1A2028;--ink:#E6EAF0;--muted:#9AA5B3;--line:#2C3541;
+  --accent:#7FA8E0;--accent-ink:#0E1620;--late:#EF6B5F;--late-bg:#3A1F1D;--ok:#5CC293;--ok-bg:#16302A;}}
+:root[data-theme="dark"]{
+  --paper:#12161C;--card:#1A2028;--ink:#E6EAF0;--muted:#9AA5B3;--line:#2C3541;
+  --accent:#7FA8E0;--accent-ink:#0E1620;--late:#EF6B5F;--late-bg:#3A1F1D;--ok:#5CC293;--ok-bg:#16302A;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:16px;line-height:1.45;font-variant-numeric:tabular-nums}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 48px}
+header.clock{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;
+  border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:18px}
+.time{font-size:clamp(48px,14vw,84px);font-weight:700;letter-spacing:-0.04em;line-height:.9}
+.time small{font-size:.35em;font-weight:500;color:var(--muted);letter-spacing:0;margin-left:6px}
+.today{color:var(--muted);text-align:right}
+.today strong{display:block;color:var(--ink);font-size:18px}
+nav{display:flex;gap:4px;overflow-x:auto;margin-bottom:18px}
+nav button{flex:1;min-width:max-content;background:transparent;border:1px solid var(--line);color:var(--ink);
+  padding:10px 14px;border-radius:8px;font:inherit;font-weight:500;cursor:pointer}
+nav button[aria-selected="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+h2{font-size:22px;margin:0 0 4px}
+p.hint{color:var(--muted);margin:0 0 16px;font-size:15px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+label{display:block;font-size:14px;color:var(--muted);margin-bottom:4px}
+input,select{width:100%;font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);
+  border-radius:8px;padding:10px 12px;min-height:44px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.btn{font:inherit;font-weight:600;border:0;border-radius:8px;padding:10px 16px;min-height:44px;cursor:pointer;
+  background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.small{min-height:36px;padding:6px 12px;font-size:14px}
+.btn.danger{background:transparent;color:var(--late);border:1px solid var(--line)}
+.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+.row>*{flex:1;min-width:140px}
+.row>.btn{flex:0 0 auto}
+.person{display:grid;grid-template-columns:1fr auto;gap:10px 14px;align-items:center;
+  padding:14px 0;border-top:1px solid var(--line)}
+.person:first-child{border-top:0}
+.person .name{font-weight:600;font-size:17px}
+.person .exp{color:var(--muted);font-size:14px}
+.person .times{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
+.stamp{display:inline-block;font-weight:700;border-radius:6px;padding:4px 10px;font-size:14px;white-space:nowrap}
+.stamp.late{color:var(--late);background:var(--late-bg);border:1.5px solid var(--late);transform:rotate(-2deg)}
+.stamp.ok{color:var(--ok);background:var(--ok-bg)}
+.stamp.none{color:var(--muted);border:1px dashed var(--line)}
+.tablebox{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px;min-width:520px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--muted);font-size:14px}
+td.num,th.num{text-align:right}
+tfoot td{font-weight:700;border-bottom:0}
+.receipts{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.receipt{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper)}
+.receipt img{display:block;width:100%;height:150px;object-fit:cover;cursor:zoom-in;background:var(--line)}
+.receipt .noimg{height:150px;display:grid;place-items:center;color:var(--muted);font-size:14px}
+.receipt .meta{padding:10px 12px}
+.receipt .amt{font-weight:700;font-size:18px}
+.receipt .sub{color:var(--muted);font-size:14px}
+.empty{color:var(--muted);text-align:center;padding:24px 8px}
+.status{font-size:13px;color:var(--muted);margin-top:24px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:8px;opacity:0;pointer-events:none;
+  transition:opacity .2s;max-width:90vw}
+#toast.show{opacity:1}
+dialog{border:0;border-radius:12px;padding:0;max-width:94vw;max-height:90vh;background:var(--card)}
+dialog img{display:block;max-width:94vw;max-height:84vh}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog form{padding:8px;text-align:right}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}.stamp.late{transform:none}}
+body.staff nav button[data-tab="informe"],body.staff nav button[data-tab="personal"],body.staff nav button[data-tab="facturas"],body.staff nav button[data-tab="nomina"],body.staff nav button[data-tab="conta"],body.staff .admin-only{display:none}
+body.staff .in-exp,body.staff .in-arr{pointer-events:none;background:transparent}
+</style>
+<script src="xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="clock">
+    <div class="time" id="clock">--:--</div>
+    <div class="today"><strong id="dateLong"></strong><span id="lateToday"></span></div>
+  </header>
+
+  <nav role="tablist">
+    <button role="tab" data-tab="asistencia" aria-selected="true">Asistencia</button>
+    <button role="tab" data-tab="viaticos" aria-selected="false">Viáticos</button>
+    <button role="tab" data-tab="informe" aria-selected="false">Informe</button>
+    <button role="tab" data-tab="personal" aria-selected="false">Personal</button>
+    <button role="tab" data-tab="campo" aria-selected="false">Campo</button>
+    <button role="tab" data-tab="facturas" aria-selected="false">Facturas</button>
+    <button role="tab" data-tab="nomina" aria-selected="false">Nómina</button>
+    <button role="tab" data-tab="conta" aria-selected="false">Contabilidad</button>
+  </nav>
+
+  <!-- ASISTENCIA -->
+  <section id="tab-asistencia">
+    <div class="row" style="margin-bottom:12px">
+      <div><label for="attDate">Fecha</label><input type="date" id="attDate"></div>
+    </div>
+    <div class="panel" id="attList"></div>
+  </section>
+
+  <!-- VIATICOS -->
+  <section id="tab-viaticos" hidden>
+    <h2>Subir ticket de viático</h2>
+    <p class="hint">Toma una foto del ticket o factura y regístrala con su monto.</p>
+    <div class="panel">
+      <div class="grid">
+        <div><label for="exEmp">Persona</label><select id="exEmp"></select></div>
+        <div><label for="exDate">Fecha</label><input type="date" id="exDate"></div>
+        <div><label for="exAmount">Monto ($)</label><input type="number" id="exAmount" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+        <div><label for="exConcept">Concepto</label>
+          <select id="exConcept"><option>Transporte</option><option>Alimentación</option><option>Hospedaje</option><option>Combustible</option><option>Peajes / parqueo</option><option>Otro</option></select></div>
+      </div>
+      <div style="margin-top:12px"><label for="exNote">Detalle (opcional)</label><input id="exNote" placeholder="Ej. taxi a reunión con cliente"></div>
+      <div class="row" style="margin-top:12px">
+        <div><label for="exFile">Foto del ticket</label><input type="file" id="exFile" accept="image/*" capture="environment"></div>
+        <button class="btn" id="exSave">Guardar viático</button>
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:12px">
+      <div><label for="exFilter">Ver de</label><select id="exFilter"></select></div>
+      <div><label for="exMonth">Mes</label><input type="month" id="exMonth"></div>
+    </div>
+    <div class="receipts" id="exList"></div>
+  </section>
+
+  <!-- INFORME -->
+  <section id="tab-informe" hidden>
+    <h2>Informe</h2>
+    <p class="hint">Atrasos, descuentos y viáticos por persona en el período elegido.</p>
+    <div class="row" style="margin-bottom:12px">
+      <div><label for="repFrom">Desde</label><input type="date" id="repFrom"></div>
+      <div><label for="repTo">Hasta</label><input type="date" id="repTo"></div>
+      <button class="btn ghost" id="repMonth">Este mes</button>
+    </div>
+    <div class="panel tablebox"><table id="repTable"></table></div>
+    <h2 style="font-size:18px;margin-top:20px">Detalle de atrasos</h2>
+    <div class="panel tablebox"><table id="repDetail"></table></div>
+    <div class="row"><button class="btn" id="repCsv">Descargar informe (CSV)</button><button class="btn ghost" id="repPrint">Imprimir</button></div>
+  </section>
+
+  <!-- PERSONAL -->
+  <section id="tab-personal" hidden>
+    <h2>Personal</h2>
+    <p class="hint">Hora de entrada habitual y cuánto se descuenta por cada minuto de atraso.</p>
+    <div class="panel">
+      <div class="grid">
+        <div><label for="pName">Nombre</label><input id="pName" placeholder="Ej. María"></div>
+        <div><label for="pEntry">Hora de entrada</label><input type="time" id="pEntry" value="08:30"></div>
+        <div><label for="pRate">Descuento por minuto ($)</label><input type="number" id="pRate" min="0" step="0.01" value="0.10" inputmode="decimal"></div>
+        <div><label for="pUid">ID de usuario AWS</label><input id="pUid" placeholder="User name de Cognito"></div>
+      </div>
+      <div class="row" style="margin-top:12px"><div></div><button class="btn" id="pAdd">Agregar persona</button></div>
+    </div>
+    <div class="panel">
+      <div class="row">
+        <div><label for="tol">Minutos de tolerancia</label><input type="number" id="tol" min="0" step="1" value="0" inputmode="numeric"></div>
+        <button class="btn ghost" id="tolSave">Guardar tolerancia</button>
+      </div>
+      <p class="hint" style="margin:8px 0 0">Si alguien llega dentro de la tolerancia no se descuenta. Si la pasa, se descuentan todos los minutos de atraso.</p>
+    </div>
+    <div class="panel" id="peopleList"></div>
+  </section>
+
+  <!-- CAMPO -->
+  <section id="tab-campo" hidden>
+    <h2>Selfies de campo</h2>
+    <p class="hint">Se piden varias al día en horas aleatorias. La persona debe tener esta página abierta en su celular.</p>
+    <div class="panel">
+      <div class="grid">
+        <div><label for="cfEmp">Persona</label><select id="cfEmp"></select></div>
+        <div><label for="cfPlace">Lugar de la visita</label><input id="cfPlace" placeholder="Ej. Restaurante La Selva"></div>
+      </div>
+      <div id="cfSlots" style="margin:12px 0"></div>
+      <div class="row"><div><label for="cfFile">Selfie</label><input type="file" id="cfFile" accept="image/*" capture="user"></div>
+        <button class="btn" id="cfSave">Enviar selfie</button><button class="btn ghost" id="cfNotif">Activar avisos</button></div>
+    </div>
+    <div class="panel admin-only">
+      <div class="grid">
+        <div><label for="cfN">Selfies por día</label><input type="number" id="cfN" min="1" max="10" value="3"></div>
+        <div><label for="cfA">Desde</label><input type="time" id="cfA" value="09:00"></div>
+        <div><label for="cfB">Hasta</label><input type="time" id="cfB" value="17:00"></div>
+      </div>
+      <div id="cfWho" style="margin-top:12px"></div>
+      <button class="btn ghost small" id="cfCfg" style="margin-top:8px">Guardar configuración</button>
+    </div>
+    <div class="row" style="margin-bottom:12px"><div><label for="cfDate">Ver selfies del</label><input type="date" id="cfDate"></div></div>
+    <div class="receipts" id="cfList"></div>
+  </section>
+
+  <!-- FACTURAS -->
+  <section id="tab-facturas" hidden>
+    <h2>Facturas de la empresa</h2>
+    <p class="hint">Sube cada factura de consumo. Las deducibles pasan a gastos empresariales.</p>
+    <div class="panel">
+      <div class="grid">
+        <div><label for="fDate">Fecha</label><input type="date" id="fDate"></div>
+        <div><label for="fProv">Proveedor</label><input id="fProv"></div>
+        <div><label for="fRuc">RUC</label><input id="fRuc" inputmode="numeric"></div>
+        <div><label for="fNum">N.º de factura</label><input id="fNum" placeholder="001-001-000000123"></div>
+        <div><label for="fBase">Valor sin IVA ($)</label><input type="number" id="fBase" min="0" step="0.01" inputmode="decimal"></div>
+        <div><label for="fIva">IVA</label><select id="fIva"><option value="15">15 %</option><option value="0">0 %</option></select></div>
+        <div><label for="fCat">Categoría</label><select id="fCat"><option>Alimentación</option><option>Transporte</option><option>Suministros de oficina</option><option>Servicios básicos</option><option>Arriendo</option><option>Tecnología y software</option><option>Marketing y publicidad</option><option>Honorarios profesionales</option><option>Materia prima</option><option>Otros</option></select></div>
+      </div>
+      <label style="display:flex;gap:8px;align-items:center;margin:12px 0;color:var(--ink)"><input type="checkbox" id="fDed" checked style="width:auto;min-height:0"> Es gasto deducible (confírmalo con tu contador)</label>
+      <div class="row"><div><label for="fFile">Foto o PDF de la factura</label><input type="file" id="fFile" accept="image/*,application/pdf"></div><button class="btn" id="fSave">Guardar factura</button></div>
+    </div>
+    <div class="row" style="margin-bottom:12px"><div><label for="fMonth">Mes</label><input type="month" id="fMonth"></div><button class="btn ghost" id="fXls">Descargar Excel del mes</button></div>
+    <div class="panel tablebox"><table id="fTable"></table></div>
+  </section>
+
+  <!-- NOMINA -->
+  <section id="tab-nomina" hidden>
+    <h2>Nómina</h2>
+    <p class="hint">Los atrasos del mes se descuentan solos. Revisa los porcentajes con tu contador.</p>
+    <div class="panel"><div class="grid">
+      <div><label for="nMonth">Mes</label><input type="month" id="nMonth"></div>
+      <div><label for="nP">IESS personal (%)</label><input type="number" id="nP" step="0.01" class="n-cfg"></div>
+      <div><label for="nE">IESS patronal (%)</label><input type="number" id="nE" step="0.01" class="n-cfg"></div>
+      <div><label for="nS">Sueldo básico (para 14.º)</label><input type="number" id="nS" step="0.01" class="n-cfg"></div>
+      <div><label for="nF">Fondos de reserva</label><select id="nF" class="n-cfg"><option value="0">No aplica</option><option value="1">8,33 % a todos</option></select></div>
+    </div></div>
+    <div class="panel tablebox"><table id="nTable"></table></div>
+  </section>
+
+  <!-- CONTABILIDAD -->
+  <section id="tab-conta" hidden>
+    <h2>Contabilidad</h2>
+    <p class="hint">Resumen mensual con facturas deducibles, ingresos y nómina. Es un control interno, no reemplaza tu declaración al SRI.</p>
+    <div class="panel">
+      <div class="grid">
+        <div><label for="cDate">Fecha</label><input type="date" id="cDate"></div>
+        <div><label for="cClient">Cliente</label><input id="cClient"></div>
+        <div><label for="cConcept">Concepto</label><input id="cConcept"></div>
+        <div><label for="cBase">Valor sin IVA ($)</label><input type="number" id="cBase" min="0" step="0.01" inputmode="decimal"></div>
+        <div><label for="cIva">IVA</label><select id="cIva"><option value="15">15 %</option><option value="0">0 %</option></select></div>
+      </div>
+      <div class="row" style="margin-top:12px"><div></div><button class="btn" id="cAdd">Registrar ingreso</button></div>
+    </div>
+    <div class="row" style="margin-bottom:12px"><div><label for="cMonth">Mes</label><input type="month" id="cMonth"></div><button class="btn" id="cXls">Descargar Excel contable</button></div>
+    <div class="panel tablebox"><table id="cSum"></table></div>
+    <h2 style="font-size:18px">Ingresos del mes</h2>
+    <div class="panel tablebox"><table id="cInc"></table></div>
+  </section>
+
+
+  <p class="status"><span id="status">Conectando…</span> <button class="btn ghost small" id="logout">Cerrar sesión</button></p>
+</div>
+
+<div id="login" hidden style="position:fixed;inset:0;background:var(--paper);display:grid;place-items:center;z-index:50;padding:16px">
+  <div class="panel" style="width:min(380px,100%)">
+    <h2>Iniciar sesión</h2>
+    <div id="lgStep1"><label for="lgUser">Correo</label><input id="lgUser" type="email" autocomplete="username"><label for="lgPass" style="margin-top:10px">Contraseña</label><input id="lgPass" type="password" autocomplete="current-password"></div>
+    <div id="lgStep2" hidden><p class="hint">Es tu primer ingreso. Crea una contraseña nueva: mínimo 8 caracteres, con mayúscula, minúscula, número y símbolo.</p><label for="lgNew">Contraseña nueva</label><input id="lgNew" type="password" autocomplete="new-password"></div>
+    <p id="lgErr" style="color:var(--late);min-height:1.4em"></p>
+    <button class="btn" id="lgBtn" style="width:100%">Entrar</button>
+  </div>
+</div>
+<dialog id="viewer"><img id="viewerImg" alt="Ticket"><form method="dialog"><button class="btn small">Cerrar</button></form></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="/src/main.js"></script>
+
+</body>
+</html>

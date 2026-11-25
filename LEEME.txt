@@ -1,0 +1,23 @@
+SUBIR A AWS (Amplify Gen 2)
+
+1. Sube esta carpeta a un repositorio de GitHub (nuevo, privado).
+2. En la consola de AWS: Amplify > Create new app > GitHub > elige el repositorio y la rama main.
+   Deja el amplify.yml que ya viene incluido y pulsa Deploy. Tarda unos 10 minutos.
+   Usa la region us-east-1 (Virginia del Norte) si no tienes preferencia.
+3. Cuando termine, abre Cognito > User pools > el que acaba de crearse.
+   Users > Create user: pon el correo. Deja que Cognito genere la contrasena temporal
+   (o que la envie por correo). La persona la cambia en su primer ingreso.
+   Para ti: entra al usuario > Add user to group > admin.
+4. Crea un usuario por cada empleado, sin grupo.
+5. AMARRAR USUARIO A PERSONA: en Cognito copia el "User name" del usuario (un codigo largo).
+   En la app, pestana Personal, pega ese codigo en "ID de usuario AWS" de esa persona.
+   Desde ese momento el empleado solo ve y registra lo suyo.
+6. Abre la URL de Amplify. El primer ingreso pide crear una contrasena nueva.
+
+PRUEBA LOCAL (opcional, necesita Node 20): npm install, npx ampx sandbox, y en otra terminal npm run dev.
+
+QUE PUEDE HACER CADA QUIEN (lo aplica AWS en el servidor, no el navegador)
+- Admin: todo.
+- Empleado: solo CREA y LEE sus propios registros (asistencia, selfies, viaticos). No puede editar ni borrar.
+  La hora de llegada, la fecha y la persona las pone el servidor, no el celular.
+  No ve facturas, ingresos, sueldos ni a otras personas.
